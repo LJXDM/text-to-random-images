@@ -1,0 +1,113 @@
+<html>
+    <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>text to random images</title>
+	<meta name="description" content="Use the Google Image Search API to substitute random images for each character of supplied text" />
+	<style>
+		form { margin: 10px auto; width: 300px; }
+		div#letters { display: block; margin: 100px auto; text-align: center;  }
+		div#letters div { display:  inline-block; min-width: 50px; min-height: 50px; /* border: 1px solid black; */ vertical-align: middle; text-align: center; background: url(http://media.ljxdm.com.s3.amazonaws.com/public/ajax-loader.gif) center center no-repeat; }
+		div#letters div.space { display: block; background: none; clear: both; }
+		#branding { position: absolute; bottom: 0; right: 0; }
+	</style>
+	<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+	<script type="text/javascript">
+		google.load("search", "1");
+		google.load("jquery", "1.7.1");
+
+		// handy globals
+		var search = Array(1);
+		var words = "";    
+	    var letters = "";
+	    
+	    var colours = "BLACK,BLUE,BROWN,GRAY,GREEN,ORANGE,PINK,PURPLE,RED,TEAL,WHITE,YELLOW";
+	    var colours = colours.split(',');
+		 
+		 
+		function randRange (min, max) {
+			return Math.floor(Math.random() * (max - min + 1)) + min;
+		}
+ 
+		function searchComplete(i) {
+	
+			// do we have results
+			if (search[i].results && search[i].results.length > 0) {
+			
+				var contentDiv = document.getElementById('l' + i);
+
+				var r = search[i].results;
+
+				if(letters[i]==" ") {
+					$('#l' + i).addClass("space");  	
+				} else {
+					var z = randRange(0,search[i].results.length-1)
+					var result = r[z];
+					var newImg = document.createElement('img');
+					newImg.src = result.tbUrl;
+					contentDiv.appendChild(newImg);
+				}
+			}
+		}
+	  
+		function do_search() {
+			
+			var lettersDiv = document.getElementById("letters");	
+			lettersDiv.innerHTML = "";
+			
+			words = $("input[name=words]").val();
+		    letters = words.split('');
+		    
+		    var colour = $("select").val();
+		    var colour_string = "google.search.ImageSearch.COLOR_" + colour;
+	
+			for(var i=0; i<letters.length; i++){
+			
+			   var newDiv = document.createElement('div');	 
+			   newDiv.id = "l" + i;
+			   lettersDiv.appendChild(newDiv);
+	
+		       search[i] = new google.search.ImageSearch();
+		       search[i].setResultSetSize(8) 
+		       search[i].setSearchCompleteCallback(this,searchComplete,[i]);
+		       search[i].setNoHtmlGeneration()
+		       search[i].setRestriction(google.search.Search.RESTRICT_SAFESEARCH,google.search.Search.SAFESEARCH_STRICT);
+		       search[i].setRestriction(google.search.ImageSearch.RESTRICT_IMAGESIZE,google.search.ImageSearch.IMAGESIZE_MEDIUM);
+		       search[i].setRestriction(google.search.ImageSearch.RESTRICT_COLORFILTER,eval(colour_string));
+		       search[i].execute("letter " + letters[i]);
+		    }  
+		}
+	
+	    function OnLoad() {
+	    
+	    	// populate the select with colours
+	    	$.each(colours, function(index, datum){
+				$('select').append($('<option/>').val(datum).text(datum));
+			});
+
+			// enable the button
+			$("input[type=button]").click(function() { do_search() });
+	    
+			// initial search on load
+			do_search();
+			// mandatory google branding for use of free API
+			google.search.Search.getBranding('branding');  
+	    }
+	    
+	    google.setOnLoadCallback(OnLoad);
+	</script>
+</head>
+
+<body>
+
+	<form>
+		<input type="text" name="words" value="LJXDM" />
+		<select name="colour"></select>
+		<input type="button" value="go" />
+	</form>
+	
+    <div id="letters"></div>
+    
+    <div id="branding"></div>
+    
+</body>
+</html>
